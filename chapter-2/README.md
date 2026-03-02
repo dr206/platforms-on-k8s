@@ -30,10 +30,10 @@ nodes:
       kubeletExtraArgs:
         node-labels: "ingress-ready=true"
   extraPortMappings:
-  - containerPort: 80
+  - containerPort: 30376
     hostPort: 80
     protocol: TCP
-  - containerPort: 443
+  - containerPort: 32069
     hostPort: 443
     protocol: TCP
 - role: worker
@@ -80,8 +80,20 @@ In your terminal, access the`chapter-2` directory, and from there, run the scrip
 
 We need the NGINX Ingress Controller to route traffic from our laptop to the services running inside the cluster. NGINX Ingress Controller acts as a router that is running inside the cluster but is also exposed to the outside world. 
 
+Add `helm` repo for `ingress-nginx`:
 ```shell
-kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml
+helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+helm repo update
+```
+
+Install `NodePort` ingress with ports that map to the `kind` cluster definition above:
+```shell
+helm install ingress-nginx ingress-nginx/ingress-nginx \
+  --namespace ingress-nginx \
+  --create-namespace \
+  --set controller.service.type=NodePort \
+  --set controller.service.nodePorts.http=30376 \
+  --set controller.service.nodePorts.https=32069
 ```
 
 Check that the pods inside the `ingress-nginx` are started correctly before proceeding: 
