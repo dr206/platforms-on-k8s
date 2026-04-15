@@ -30,10 +30,10 @@ nodes:
       kubeletExtraArgs:
         node-labels: "ingress-ready=true"
   extraPortMappings:
-  - containerPort: 80
+  - containerPort: 30376
     hostPort: 80
     protocol: TCP
-  - containerPort: 443
+  - containerPort: 32069
     hostPort: 443
     protocol: TCP
 - role: worker
@@ -80,8 +80,20 @@ In your terminal, access the`chapter-2` directory, and from there, run the scrip
 
 We need the NGINX Ingress Controller to route traffic from our laptop to the services running inside the cluster. NGINX Ingress Controller acts as a router that is running inside the cluster but is also exposed to the outside world. 
 
+Add `helm` repo for `ingress-nginx`:
 ```shell
-kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml
+helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+helm repo update
+```
+
+Install `NodePort` ingress with ports that map to the `kind` cluster definition above:
+```shell
+helm install ingress-nginx ingress-nginx/ingress-nginx \
+  --namespace ingress-nginx \
+  --create-namespace \
+  --set controller.service.type=NodePort \
+  --set controller.service.nodePorts.http=30376 \
+  --set controller.service.nodePorts.https=32069
 ```
 
 Check that the pods inside the `ingress-nginx` are started correctly before proceeding: 
@@ -119,16 +131,22 @@ Once we have our cluster and our Ingress Controller installed and configured, we
 
 From Helm 3.7+, we can use OCI images to publish, download, and install Helm Charts. This approach uses Docker Hub as a Helm Chart registry. 
 
+> [!WARNING]  
+> The images on `docker.io/bitnami` are not availabled.  
+> Instead use iamges from `docker.io/bitnamilegacy`.
+> This can be updated in the helm charts by running a post render script that is provided: `./rewrite-bitnami-images.sh`.
+
+
 To install the Conference Application, you only need to run the following command:
 
 ```shell
-helm install conference oci://docker.io/salaboy/conference-app --version v1.0.0
+helm install conference oci://docker.io/salaboy/conference-app --version v1.0.0 --post-renderer ./rewrite-bitnami-images.sh
 ```
 
 You can also run the following command to see the details of the chart: 
 
 ```shell
-helm show all oci://docker.io/salaboy/conference-app --version v1.0.0
+helm show all oci://docker.io/salaboy/conference-app --version v1.0.0 --post-renderer ./rewrite-bitnami-images.sh
 ```
 
 Check that all the application pods are up and running. 
