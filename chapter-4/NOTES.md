@@ -67,26 +67,11 @@ argocd account update-password \
 In order to override the docker repository for the staging environment,
 we will use a [config management plugin](https://argo-cd.readthedocs.io/en/stable/operator-manual/config-management-plugins/).  
 This is described in the [CMP postrender README](./argo-cd/cmp-postrender/README.md).  
-A consequence of this change of plugin, from Helm to custom, is that we cannot perform a simple parameter override to the valaues file.
+The custom plugin supports values files overrides via the `Values File` parameter, which we will use in the next step when creating an application.
 
 ### Create an application
 
-In the dir above your repo:
-```shell
-git daemon --reuseaddr --export-all --base-path=. --verbose .
-```
-and use
-
-```text
-git://host.docker.internal:9418/platforms-on-k8s
-```
-
-as your repository URL when creating the application in Argo CD.
-
----
 Follow the [click-ops steps](./README.md#setting-up-our-application-for-the-staging-environment).
-
-
 
 (optional)
 ```shell

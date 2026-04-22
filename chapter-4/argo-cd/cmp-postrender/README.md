@@ -59,6 +59,11 @@ data:
       discover:
         find:
           glob: "**/Chart.yaml"
+      parameters:
+        static:
+          - name: valuesFile
+            title: Values File
+            string: "values.yaml"
       init:
         command: [sh, -c]
         args:
@@ -70,7 +75,7 @@ data:
             helm template "$ARGOCD_APP_NAME" . \
               --namespace "$ARGOCD_APP_NAMESPACE" \
               --include-crds \
-              -f values.yaml \
+              -f "${PARAM_VALUESFILE}" \
               | /usr/local/bin/post-render.sh
 EOF
 ```
@@ -101,6 +106,7 @@ Add the init container and CMP sidecar to the existing `argocd-repo-server` Depl
 
 Replace `v2.10.0` with the version from Step 1.
 
+It is more effective to copy and paste into your terminal than to run this as a single command, rather than execute the command from markdown. 
 ```bash
 kubectl patch deployment argocd-repo-server -n argocd --type strategic --patch "
 spec:
@@ -152,26 +158,6 @@ spec:
 "
 ```
 
-```shell
- kubectl patch deployment argocd-repo-server -n argocd --type json --patch '
-  [
-    {
-      "op": "remove",
-      "path": "/spec/template/spec/initContainers/1"
-    }
-  ]
-'
-```
-
-This fixes an issue where the patch command adds a duplicate init container on subsequent runs. The `copy-cmp-server` init container should only be added once.
-
-The index used in the `remove` operation may need to be adjusted if you have other init containers defined:
-
-```shell
-kubectl get deployment argocd-repo-server -n argocd \
-    -o jsonpath='{range .spec.template.spec.initContainers[*]}{.name}{"\n"}{end}'
-```
-
 ---
 
 ## Step 5: Verify the Sidecar is Running
@@ -196,6 +182,8 @@ Check the sidecar logs to confirm it started cleanly:
 ```bash
 kubectl logs -n argocd deployment/argocd-repo-server -c cmp-helm-postrender
 ```
+
+Return to [creating the application](../../NOTES.md#create-an-application) before verifying that the plug-in is being used.
 
 ---
 
